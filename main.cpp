@@ -140,7 +140,8 @@ class Ball{
       float dy = Y - close_point[1];
       float dist_sq = (dx*dx) + (dy*dy);
       // Edge collision:
-      if (dist_sq <= (size + 0.0001)*(size + 0.0001)){
+      // Adding a small error term for better detection.
+      if (dist_sq <= (size + 0.1)*(size + 0.1)){
          float length = sqrt(dist_sq);
 
          // Prevents division by zero to avoid errors.
@@ -151,6 +152,12 @@ class Ball{
          float n_y = dy/length;
          float v_x = speed[0];
          float v_y = speed[1];
+
+         // Position correction to avoid getting stuck inside the box.
+         float overlap = (size + 0.01) - length;
+
+         X += n_x*overlap;
+         Y += n_y*overlap;
 
          // Velocity along normal direction:
          float dot_product = v_x*n_x + v_y*n_y;
@@ -167,39 +174,107 @@ class Ball{
 
 };
 
-Ball ball(10, 10, 5, 5, 5,10,ILI9341_GREEN);
+void ball_ball_collision(Ball &ball1, Ball &ball2){
+     //Checking for ball to ball collision.
+   float del_x = ball1.X - ball2.X;
+   float del_y = ball1.Y - ball2.Y;
+   // Adding a small error term for better detection.
+   float closest_dist = ball1.size + ball2.size + 0.1;
+   if (del_x*del_x + del_y*del_y <= closest_dist*closest_dist){
+      float length = sqrt(del_x*del_x + del_y*del_y);
+      // Finding the normal and tangential direction.
+      float n_x = del_x/length;
+      float n_y  = del_y/length;
+      float t_x = -n_y;
+      float t_y = n_x;
+
+      // Position correction to avoid the balls sticking together.
+      float overlap = (closest_dist) - length;
+
+      // Pushing the balls along the normal direction to make it not overlap.
+      ball1.X += overlap*0.5*n_x;
+      ball1.Y += overlap*0.5*n_y;
+
+      ball2.X -= overlap*0.5*n_x;
+      ball2.Y -= overlap*0.5*n_y;
+
+      float v1x = ball1.speed[0];
+      float v1y = ball1.speed[1];
+      float v2x = ball2.speed[0];
+      float v2y = ball2.speed[1];
+
+      // Finding the velocities along the normal and tangential direction.
+      float v1_n_old = n_x*v1x + n_y*v1y;
+      float v2_n_old = n_x*v2x + n_y*v2y;
+      float v1_t = t_x*v1x + t_y*v1y;
+      float v2_t = t_x*v2x + t_y*v2y;
+
+      float m1 = ball1.mass;
+      float m2 = ball2.mass;
+
+      // Update the velocity only if they are moving towards each other.
+      if (v1_n_old - v2_n_old < 0) {
+
+      // Calculating the new velocity along the normal direction.
+      float v1_n = (v1_n_old * (m1 - m2) + 2 * m2 * v2_n_old) / (m1 + m2);
+      float v2_n = (v2_n_old * (m2 - m1) + 2 * m1 * v1_n_old) / (m1 + m2);
+
+      // Calculating the new velocities for the balls.
+      ball1.speed[0] = v1_n*n_x + v1_t*t_x;
+      ball1.speed[1] = v1_n*n_y + v1_t*t_y;
+      ball2.speed[0] = v2_n*n_x + v2_t*t_x;
+      ball2.speed[1] = v2_n*n_y + v2_t*t_y;
+   }}
+}
+
+
+
+Ball ball1(10, 10, 5, 5, 5,10,ILI9341_GREEN);
+Ball ball2(310, 10, 3, 5, -5,10, ILI9341_ORANGE);
 Box box(40, 60);
 
 void setup(){
    tft.begin();
    tft.setRotation(3); 
    tft.fillScreen(ILI9341_BLACK);
-   box.rotate_box(100);
+   box.rotate_box(360);
    box.draw_box();
-   ball.draw();
+   ball1.draw();
+   ball2.draw();
 }
 
 void loop(){
    // Clearing the objects from the old frame.
-   ball.erase();
+   ball1.erase();
+   ball2.erase();
 
    // Updating the coordinates of the ball for each frame.
-   ball.update();
+   ball1.update();
+   ball2.update();
 
    // Checking for wall collisions.
-   ball.wall_collision();
+   ball1.wall_collision();
+   ball2.wall_collision();
+
+   // Checking for ball-ball collisions.
+   ball_ball_collision(ball1, ball2);
 
    // Left edge.
-   ball.box_edge_collisions(box.v[0][0], box.v[0][1], box.v[3][0], box.v[3][1]);
+   ball1.box_edge_collisions(box.v[0][0], box.v[0][1], box.v[3][0], box.v[3][1]);
+   ball2.box_edge_collisions(box.v[0][0], box.v[0][1], box.v[3][0], box.v[3][1]);
     // Right edge.
-   ball.box_edge_collisions(box.v[2][0], box.v[2][1], box.v[1][0], box.v[1][1]);
+   ball1.box_edge_collisions(box.v[2][0], box.v[2][1], box.v[1][0], box.v[1][1]);
+   ball2.box_edge_collisions(box.v[2][0], box.v[2][1], box.v[1][0], box.v[1][1]);
     // Top edge.
-   ball.box_edge_collisions(box.v[1][0], box.v[1][1], box.v[0][0], box.v[0][1]);
+   ball1.box_edge_collisions(box.v[1][0], box.v[1][1], box.v[0][0], box.v[0][1]);
+   ball2.box_edge_collisions(box.v[1][0], box.v[1][1], box.v[0][0], box.v[0][1]);
     // Bottom edge.
-   ball.box_edge_collisions(box.v[3][0], box.v[3][1], box.v[2][0], box.v[2][1]);
+   ball1.box_edge_collisions(box.v[3][0], box.v[3][1], box.v[2][0], box.v[2][1]);
+   ball2.box_edge_collisions(box.v[3][0], box.v[3][1], box.v[2][0], box.v[2][1]);
 
     // Displaying the objects at the new positions.
-   ball.draw();
+   ball1.draw();
+   ball2.draw();
    box.draw_box();
 
    delay(25);
