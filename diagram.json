@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "author": "S Sujeeth Kanna ee25b137",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -86.4, "left": 43.24, "attrs": {} },
+    {
+      "type": "wokwi-ili9341",
+      "id": "lcd1",
+      "top": -129.5,
+      "left": 270,
+      "rotate": 90,
+      "attrs": { "flipHorizontal": "1", "flipVertical": "1" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "lcd1:VCC", "esp:3V3", "red", [ "h-67.2", "v-86.4", "h-105.6" ] ],
+    [ "lcd1:GND", "esp:GND.2", "black", [ "h-48", "v-48" ] ],
+    [ "lcd1:SCK", "esp:18", "green", [ "h-48", "v-19.21" ] ],
+    [ "lcd1:MOSI", "esp:23", "green", [ "h-38.4", "v-76.81" ] ],
+    [ "esp:19", "lcd1:MISO", "green", [ "h19.2", "v48", "h9.6" ] ],
+    [ "lcd1:D/C", "esp:4", "green", [ "h-28.8", "v38.4", "h-9.6" ] ],
+    [ "lcd1:RST", "esp:2", "green", [ "h-19.2", "v57.6" ] ],
+    [ "lcd1:CS", "esp:5", "green", [ "h-67.2", "v28.8" ] ],
+    [ "lcd1:LED", "esp:3V3", "green", [ "h-28.8", "v-172.81", "h-144" ] ]
+  ],
+  "dependencies": {}
+}
