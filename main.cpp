@@ -142,19 +142,18 @@ class Ball{
       // Edge collision:
       // Adding a small error term for better detection.
       if (dist_sq <= (size + 0.1)*(size + 0.1)){
-         float length = sqrt(dist_sq);
-
-         // Prevents division by zero to avoid errors.
-         if (length == 0) return;
+         float Dx = x2 - x1;
+         float Dy = y2 - y1;
+         float length = sqrt(Dx*Dx + Dy*Dy);
 
          // Normal direction:
-         float n_x = dx/length;
-         float n_y = dy/length;
+         float n_x = -Dy/length;
+         float n_y = Dx/length;
          float v_x = speed[0];
          float v_y = speed[1];
 
          // Position correction to avoid getting stuck inside the box.
-         float overlap = (size + 0.01) - length;
+         float overlap = (size + 1) - sqrt(dist_sq);
 
          X += n_x*overlap;
          Y += n_y*overlap;
@@ -228,16 +227,17 @@ void ball_ball_collision(Ball &ball1, Ball &ball2){
 }
 
 
-
-Ball ball1(10, 10, 5, 5, 5,10,ILI9341_GREEN);
-Ball ball2(310, 10, 3, 5, -5,10, ILI9341_ORANGE);
+// Properties of the objects can be changed here:
+Ball ball1(10, 10, 5, 10, 10,10,ILI9341_GREEN);
+Ball ball2(310, 10, 3, 10, -10,10, ILI9341_ORANGE);
 Box box(40, 60);
 
 void setup(){
    tft.begin();
    tft.setRotation(3); 
    tft.fillScreen(ILI9341_BLACK);
-   box.rotate_box(360);
+   // Orientation of the box:
+   box.rotate_box(10);
    box.draw_box();
    ball1.draw();
    ball2.draw();
